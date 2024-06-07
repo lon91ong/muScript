@@ -10,4 +10,4 @@ python Run.py XY #浏览器窗口
 
 不过窗口不能遮挡，需要通过截图识别状态
 
-![Firefox窗口](./imgs/Firefox.png)
+![Firefox窗口](imgs/Firefox.png)
