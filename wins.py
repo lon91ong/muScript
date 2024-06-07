@@ -1,10 +1,4 @@
-#from ctypes import byref #,windll
-#from ctypes.wintypes import RECT
 from time import sleep
-#from ctypes import WinDLL
-#windll.user32.LockSetForegroundWindow(1) 
-#user32 = WinDLL('user32', use_last_error=True)
-#user32.LockSetForegroundWindow(1) # 禁止抢焦点
 
 # 规定窗口宽度，高度为宽度的9/16 + 44
 WIDTH_WIN = 832
@@ -24,31 +18,21 @@ MOUSE_MOVE = 512 #0x0001  # 鼠标移动
 MOUSE_LEFTDOWN = 513 #0x0002  # 左键按下
 MOUSE_LEFTUP = 514 #0x0004  # 左键释放
 def bkg_click(hWnd, coord, drag = False, delta = 0, count = 1):
-	from win32.win32gui import PostMessage, GetParent, GetClassName #, GetForegroundWindow, SetForegroundWindow #, SendMessage, FindWindowEx
-#	foreWnd = user32.GetForegroundWindow()
-#	print("ForegroundWindowHandle:", foreWnd)
-#	user32.LockSetForegroundWindow(1) # 禁止抢焦点
+	from win32.win32gui import PostMessage, GetParent, GetClassName
 	if coord[0] < 1: # 坐标相对窗口比例
 		x, y = int(coord[0]*WIDTH_WIN) + delta_X, int(coord[1]*(WIDTH_WIN*9/16)) + delta_Y # 坐标换算
 	else: # 窗口内坐标
 		x, y = int(coord[0]), int(coord[1])
-#	child_hWnd = FindWindowEx(hWnd,None,'Chrome_RenderWidgetHostHWND', None)
 	if GetClassName(hWnd) == 'Intermediate D3D Window': #无法接收鼠标事件
 		hWnd = GetParent(hWnd)
-		#print(f'x:{x}, y:{y}')
 		if x==479 and y==326: x -= 2 #圣域传送员修正
 	while count > 0:
 		lParam = x | y <<16
-#		SendMessage(child_hWnd, MOUSE_LEFTDOWN, MK_LBUTTON, lParam)
 		PostMessage(hWnd, MOUSE_LEFTDOWN, MK_LBUTTON, lParam)
 		if drag:
 			lParam = x | (y + delta) <<16
-#			SendMessage(child_hWnd,MOUSE_MOVE, MK_LBUTTON, lParam)
 			PostMessage(hWnd,MOUSE_MOVE, MK_LBUTTON, lParam)
-#		SendMessage(child_hWnd, MOUSE_LEFTUP, MK_LBUTTON, lParam)
 		PostMessage(hWnd, MOUSE_LEFTUP, MK_LBUTTON, lParam)
-#		user32.ShowWindow(foreWnd,1)
-#		user32.SetForegroundWindow(foreWnd) # 归还焦点
 		sleep((300 if count > 1 else 100)/1000)
 		count -= 1
 
@@ -57,8 +41,7 @@ from win32gui import SetWindowPos, GetWindowRect, GetDC
 prime_screen_width = GetDeviceCaps(GetDC(0),118) #主屏横向分辨率
 prime_screen_height = GetDeviceCaps(GetDC(0),117) #主屏纵向分辨率
 def get_windows(XY=False):
-	from win32gui import GetWindowText,  EnumWindows, FindWindowEx #, SetWindowLong
-#	from win32con import GWL_EXSTYLE, WS_EX_NOACTIVATE
+	from win32gui import GetWindowText,  EnumWindows, FindWindowEx
 	
 	"""获取所有窗口句柄"""
 	windows = []
@@ -129,35 +112,26 @@ def screezeCap(hWnd, top = False):
 	if top: # 置顶
 		SetWindowPos(hWnd, 0, 0, 0, 0, 0, 16 | 64) 
 		sleep(0.5)
-	image = None; n = 3 # 有失败可能，三次尝试
-	while image is None and n > 0: 
+	image = None; n = 4 # 有失败可能，三次尝试
+	while image is None and (n:=n-1) > 0: 
 		image = np.asarray(screenshot(region=[rect['left'], rect['top'], rect['right'] - rect['left'], rect['bottom'] - rect['top']]))
-		n -= 1
 	if top: # 置顶
 		SetWindowPos(hWnd, -2, 0, 0, 0, 0, 16 | 64) # 下沉窗口
 	return image
 
 def dxcamCap(hWnd, top = False):
 	import dxcam # dxcam截图支持多个屏幕, 速度快, 兼容性欠佳
-	#from PIL import Image
 	global prime_screen_width
 	rect = dict(zip('left top right bottom'.split(), GetWindowRect(hWnd)))
 	# 窗口截图
-#	SetWindowPos(hWnd, (0 if top else -2), 0, 0, 0, 0, 1 | 2 | 16 | 64 | 512) # 置顶
-#	sleep(0.3)
 	camera = dxcam.create(output_idx=(0 if rect['right'] <= prime_screen_width else 1), output_color="BGR")
-	image = None # 有失败可能，三次尝试
-	while image is None and (n:=3) > 0:
+	image = None; n = 4 # 有失败可能，三次尝试
+	while image is None and (n:=n-1) > 0:
 		if rect['right'] <= prime_screen_width: #主屏
 			image = camera.grab(region=(rect['left'],rect['top'], rect['right'], rect['bottom'])) #第二屏修正
 		else: #第二屏
-			#print("Rect info:", rect['left']-prime_screen_width,rect['top'],rect['right']-prime_screen_width,rect['bottom'])
 			image = camera.grab(region=(rect['left']-prime_screen_width,rect['top'],rect['right']-prime_screen_width,rect['bottom'])) #第二屏修正
 			#image = image[:, :, ::-1] #反转色彩通道
-		n -= 1
-	#Image.fromarray(image).show()
-#	if top: # 置顶
-#		SetWindowPos(hWnd, -2, 0, 0, 0, 0, 1 | 2 | 16 | 64 | 512) # 下沉窗口
 	return image
 
 if __name__ == "__main__":
