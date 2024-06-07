@@ -1,6 +1,10 @@
 # 使用说明
 
 ``` cmd
+wins.py  #基础的点击、截图、窗口句柄等功能函数
+muMod.py  #功能函数
+Run.py    #入口
+#运行方式
 python Run.py #小程序窗口
 python Run.py XY #浏览器窗口
 ```
