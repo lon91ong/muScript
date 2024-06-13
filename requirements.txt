@@ -1,0 +1,6 @@
+dxcam==0.0.5
+findimage==0.2.0
+inputimeout==1.0.4
+numpy==1.25.2
+opencv-python==4.8.0.76
+pywin32==306
