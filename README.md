@@ -19,7 +19,7 @@ python Run.py XY #浏览器窗口
 
 不过窗口不能遮挡，需要通过截图识别状态
 
-![Firefox窗口](imgs/Firefox.png)
+![Firefox窗口](Firefox.png)
 
 ### 精简python环境Embedded包加工方法
 [下载](https://www.python.org/downloads/windows/)后解压到指定目录，修改python311._pth文件内容：
