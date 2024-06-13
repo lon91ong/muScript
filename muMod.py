@@ -1,5 +1,6 @@
 from sys import exc_info
 import cv2, numpy as np
+from zipfile import ZipFile
 from traceback import print_tb
 from time import sleep, time, localtime, strftime
 from datetime import datetime
@@ -24,7 +25,9 @@ def line_switch(hWnd, line):
 	bkg_click(hWnd, (0.49, 0.79))
 	sleep(0.5)
 
-player_img = cv2.resize(cv2.imread('./Pics/MU_player.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+piZ = ZipFile('Pics.zip', 'r')
+player_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_player.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+#player_img = cv2.resize(cv2.imread('./Pics/MU_player.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def getPlayer(image, coord = None):
 	global player_img
 	# 获取玩家坐标
@@ -49,9 +52,9 @@ def getPlayer(image, coord = None):
 #	print(player_des["confidence"])
 	return player_des
 
-hand_img = cv2.resize(cv2.imread('./Pics/MU_hand.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-act_img = cv2.resize(cv2.imread('./Pics/MU_act.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-qiang_img = cv2.resize(cv2.imread('./Pics/MU_qiang.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+hand_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_hand.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+act_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_act.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+qiang_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_qiang.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def handAct(hWnd, top = False): # 打怪状态判断
 	# 返回值(怪, 抢, 手)
 	global hand_img, act_img
@@ -64,7 +67,7 @@ def handAct(hWnd, top = False): # 打怪状态判断
 	#if hand_status is not None:print(hand_status["result"], hand_status["confidence"])
 	return ((((act_status is not None) and act_status["confidence"]>0.7) or red_dis < 10 ), ((qiang_status is None) or qiang_status["confidence"]<0.7), ((hand_status is None) or hand_status["confidence"]<0.56))
 
-close_img = cv2.resize(cv2.imread('./Pics/MU_close.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+close_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_close.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def close_all(hWnd):
 	image = loc_capture(hWnd)
 	close_status = find_template(image[(delta_Y + 1):(int(0.146*HEIGHT_WIN)+delta_Y), int(0.093*WIDTH_WIN):(WIDTH_WIN -1)], close_img)
@@ -76,7 +79,7 @@ def close_all(hWnd):
 
 mapls = ['vip', 'uamo1', 'uamo2', 'yivi1', 'fzxu2', 'byud1', 'godu', 'ysve', 'xmzs', 'byfg', 'anny', 'ugyu', 'ufyr', 'moyr', 'yihw'] 
 for amap in mapls:
-	exec(f'{amap}_img = cv2.resize(cv2.imread("./Pics/MU_{amap}.png"), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)')
+	exec(f'{amap}_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read("MU_{amap}.png"), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)')
 
 def map_check(image):
 	map_result = ''
@@ -89,7 +92,7 @@ def map_check(image):
 			conf = map_status["confidence"]
 	return map_result
 
-mapPanl = cv2.resize(cv2.imread('./Pics/MapPanl.png'), None, fx=WIDTH_WIN/1362, fy=WIDTH_WIN/1362, interpolation=cv2.INTER_AREA)
+mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=WIDTH_WIN/1362, fy=WIDTH_WIN/1362, interpolation=cv2.INTER_AREA)
 Y_list = list(range(int(19*scaR), int(950*scaR), int(32.5*scaR)))
 map_cls = {'vip':0, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'godu':20, 'ufyr':23, 'moyr':27, 'yihw':28}
 def map_switch(hWnd, amap, level = 1, browser = 'vxx'):
@@ -174,7 +177,7 @@ def buff2(opt):
 	map_switch(opt["hWnd"], opt["map"], opt["Level"], opt["browser"]); sleep(0.5)
 	line_switch(opt["hWnd"], opt['line']); sleep(0.5)
 
-tNai_img = cv2.imread('./Pics/MU_tNai.png')
+tNai_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_tNai.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def buff3(opt):
 	er = 'naLan' if opt['buff'] == 3 else 'jiuXin'
 	nai = {'naLan':[-65, (0.192, 0.412), 1, (0.696, 0.47), 27], 'jiuXin':[-92, (0.192, 0.637), 3, (0.628, 0.619), 13]} # ['naLan', 'jiuXin']
@@ -206,7 +209,7 @@ def buff3(opt):
 	map_switch(opt["hWnd"], opt["map"], opt["Level"], opt["browser"]); sleep(0.5)
 	line_switch(opt["hWnd"], opt['line']); sleep(0.5)
 
-trans_img = cv2.imread('./Pics/MU_trans.png')
+trans_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_trans.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def buyYao(opt, red):
 	bkg_click(opt['hWnd'], ((0.405 if red else 0.463), 0.938))
 	sleep(1)
@@ -220,15 +223,15 @@ def buyYao(opt, red):
 	sleep(2)
 	bkg_click(opt['hWnd'], (0.926, (0.352 if red else 0.599)), count = (20 if opt['vvip'] else 30) + (0 if red else 10))
 
-login_img = cv2.resize(cv2.imread('./Pics/MU_login.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-start_img = cv2.resize(cv2.imread('./Pics/MU_start.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-relive_img = cv2.resize(cv2.imread('./Pics/MU_relive.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-yao_img = cv2.resize(cv2.imread('./Pics/MU_yao.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-map_img = cv2.resize(cv2.imread('./Pics/MU_map.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-#bag_img = cv2.resize(cv2.imread('./Pics/MU_bag.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-forge_img = cv2.resize(cv2.imread('./Pics/MU_forge.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-#yaoCheck_img = cv2.resize(cv2.imread('./Pics/MU_yaoCheck.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-team_img = cv2.resize(cv2.imread('./Pics/MU_team.png'), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+login_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_login.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+start_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_start.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+relive_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_relive.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+yao_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yao.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+map_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_map.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+#bag_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_bag.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+forge_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_forge.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+#yaoCheck_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yaoCheck.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+team_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_team.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 
 def diagClose(opt):
 	#from PIL import Image
