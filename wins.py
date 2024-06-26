@@ -1,10 +1,11 @@
 from time import sleep
 
-# 规定窗口宽度，高度为宽度的9/16 + 44
+# 规定窗口宽度，高度为宽度的9/16 + 44(标题栏高度)
 WIDTH_WIN = 832
 delta_X = 0
-delta_Y	= 44
+delta_Y	= 44 #小程序高44
 def reSize(x = 0, y = 44, width = WIDTH_WIN, hwnd = 0):
+	# 外部修改窗口参数接口
 	global delta_X, delta_Y, WIDTH_WIN
 	WIDTH_WIN = max(width, 450)
 	delta_X = x
@@ -17,7 +18,10 @@ MK_LBUTTON = 1 # 鼠标左键, 右键为2
 MOUSE_MOVE = 512 #0x0001  # 鼠标移动
 MOUSE_LEFTDOWN = 513 #0x0002  # 左键按下
 MOUSE_LEFTUP = 514 #0x0004  # 左键释放
-def bkg_click(hWnd, coord, drag = False, delta = 0, count = 1):
+def bkg_click(hWnd, coord, drag = 0, delta = 0, count = 1):
+	# coord:点击相对坐标元组,(x,y)
+	# drag:拖动标识, 1:纵向, 2:横向
+	# count:连续点击次数
 	from win32.win32gui import PostMessage, GetParent, GetClassName
 	if coord[0] < 1: # 坐标相对窗口比例
 		x, y = int(coord[0]*WIDTH_WIN) + delta_X, int(coord[1]*(WIDTH_WIN*9/16)) + delta_Y # 坐标换算
@@ -30,7 +34,10 @@ def bkg_click(hWnd, coord, drag = False, delta = 0, count = 1):
 		lParam = x | y <<16
 		PostMessage(hWnd, MOUSE_LEFTDOWN, MK_LBUTTON, lParam)
 		if drag:
-			lParam = x | (y + delta) <<16
+			if int(drag)==1: #纵向
+				lParam = x | (y + delta) <<16
+			if drag==2: #横向
+				lParam = (x + delta) | y <<16
 			PostMessage(hWnd,MOUSE_MOVE, MK_LBUTTON, lParam)
 		PostMessage(hWnd, MOUSE_LEFTUP, MK_LBUTTON, lParam)
 		sleep((300 if count > 1 else 100)/1000)
@@ -41,8 +48,8 @@ from win32gui import SetWindowPos, GetWindowRect, GetDC
 prime_screen_width = GetDeviceCaps(GetDC(0),118) #主屏横向分辨率
 prime_screen_height = GetDeviceCaps(GetDC(0),117) #主屏纵向分辨率
 def get_windows(XY=False):
+	# 取得窗口句柄, XY为True找浏览器窗口, 否则找小程序窗口
 	from win32gui import GetWindowText,  EnumWindows, FindWindowEx
-	
 	"""获取所有窗口句柄"""
 	windows = []
 	def enum_callback(hwnd, param):
@@ -89,8 +96,8 @@ def get_windows(XY=False):
 	EnumWindows(enum_callback, None)
 	return windows
 
-def reHwnd(left = True, XY=False) ->int:
-	# 获取所有窗口句柄
+def reHwnd(left = True, XY=False):
+	# 获取所有窗口句柄和浏览器标识
 	wins = get_windows(XY)
 	browser = ''
 	if len(wins) == 1: # 窗口唯一
@@ -103,10 +110,10 @@ def reHwnd(left = True, XY=False) ->int:
 	return winHwnd, browser
 
 # 窗口截图相关
-#uflag = 1 | 2 | 4 | 16 | 64
 import numpy as np
 def screezeCap(hWnd, top = False):
-	from pyscreeze import screenshot # pyscreeze只能对主屏幕窗口截图，优点在于系统适配好
+	# pyscreeze只能对主屏幕窗口截图，优点在于系统适配好
+	from pyscreeze import screenshot
 	rect = dict(zip('left top right bottom'.split(), GetWindowRect(hWnd)))
 	# 窗口截图
 	if top: # 置顶
@@ -120,7 +127,8 @@ def screezeCap(hWnd, top = False):
 	return image
 
 def dxcamCap(hWnd, top = False):
-	import dxcam # dxcam截图支持多个屏幕, 速度快, 兼容性欠佳
+	# dxcam截图支持多个屏幕, 速度快, 兼容性欠佳
+	import dxcam
 	global prime_screen_width
 	rect = dict(zip('left top right bottom'.split(), GetWindowRect(hWnd)))
 	# 窗口截图
@@ -141,4 +149,4 @@ if __name__ == "__main__":
 	else:
 		wins = get_windows()
 	for w in wins:
-		print(f'Window[{wins.index(w)}]: 	HWND:{w["hWnd"]}, 	LEFT:{w["rect"]["left"]}')
+		print(f'Window[{wins.index(w)}]:\tHWND:{w["hWnd"]},\tLEFT:{w["rect"]["left"]}')
