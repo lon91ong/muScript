@@ -1,7 +1,9 @@
 from time import sleep
 
 # 规定窗口宽度，高度为宽度的9/16 + 44(标题栏高度)
-WIDTH_WIN = 832
+WIDTH_WIN = 1600
+second_screen_width = 1920
+second_screen_height = 1080
 delta_X = 0
 delta_Y	= 44 #小程序高44
 def reSize(x = 0, y = 44, width = WIDTH_WIN, hwnd = 0):
@@ -33,7 +35,7 @@ def bkg_click(hWnd, coord, drag = 0, delta = 0, count = 1):
 	while count > 0:
 		lParam = x | y <<16
 		PostMessage(hWnd, MOUSE_LEFTDOWN, MK_LBUTTON, lParam)
-		if drag:
+		if drag and count == 1:
 			if int(drag)==1: #纵向
 				lParam = x | (y + delta) <<16
 			if drag==2: #横向
@@ -61,15 +63,15 @@ def get_windows(XY=False):
 				winInfo = {'pHwnd':hwnd, 'title':title}
 				if 'Microsoft' in title:
 					reSize(5, 79); browser = 'Edge'
-					SetWindowPos(hwnd, 1, prime_screen_width-8, (768 - int(WIDTH_WIN*9/16) - delta_Y - 40), WIDTH_WIN+8*2, int(WIDTH_WIN*9/16) + delta_Y + 8, 16 | 64) #副屏左下角, Edge
+					SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + (delta_X+1)*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X+1, 2 | 16 | 64) #改大小，位置不动
 					hwnd = FindWindowEx(hwnd, None, 'Intermediate D3D Window', None)
 				elif 'Google' in title:
 					reSize(1, 88); browser = 'Chrome'
-					SetWindowPos(hwnd, 1, prime_screen_width-8, (768 - int(WIDTH_WIN*9/16) - delta_Y - 40), WIDTH_WIN+8*2, int(WIDTH_WIN*9/16) + delta_Y + 8, 16 | 64) #副屏左下角, Chrome
+					SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + (delta_X)*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X, 2 | 16 | 64) #改大小，位置不动
 					hwnd = FindWindowEx(hwnd, None, 'Intermediate D3D Window', None)
 				elif 'Mozilla' in title:
 					reSize(5, 29); browser = 'Firefox'
-					SetWindowPos(hwnd, 1, 0, (prime_screen_height - int(WIDTH_WIN*9/16) - delta_Y - 38), WIDTH_WIN + (delta_X)*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X, 16 | 64) #主屏左下角, Firefox
+					SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + (delta_X+1)*2+1, int(WIDTH_WIN*9/16) + delta_Y + delta_X+2, 2 | 16 | 64) #改大小，位置不动
 				print(f'Hwnd: {hwnd}, {browser} Mode!')
 				#print("Title:", title, "\nSize info:", WIDTH_WIN+delta_X*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X)
 				rect = dict(zip( 'left top right bottom'.split(), GetWindowRect(hwnd)))
