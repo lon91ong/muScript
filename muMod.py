@@ -7,7 +7,7 @@ from datetime import datetime
 from findimage import find_template, find_all_template
 from wins import WIDTH_WIN, delta_X, delta_Y, bkg_click, dxcamCap as loc_capture #screezeCap or dxcamCap 二选一 
 
-scaR = WIDTH_WIN/865
+scaR = WIDTH_WIN/1600; scaR2 = WIDTH_WIN/865
 HEIGHT_WIN = int(0.5625*WIDTH_WIN)
 # 特殊作用坐标
 coords_spec={"map":(0.876,0.111), "close_map":(0.118,0.109), "vip":(0.2,0.193), "checkin":[0.52, 0.803], "hand":(0.97,0.457), "pack":(0.973,0.36), "off":(0.98,0.037), "recycle1":(0.875, 0.918), "recycle2":(0.85, 0.877), "red":(0.452, 0.053), "linesw":(0.95,0.967), "bless":(0.805,0.878)}
@@ -77,7 +77,7 @@ def close_all(hWnd):
 		#print(f'Close all diag with {close_status["confidence"]}')
 		bkg_click(hWnd, tuple(np.array([(int(0.093*WIDTH_WIN)+delta_X), (delta_Y + 1)]) + np.array(close_status["result"])))
 
-mapls = ['vip', 'uamo1', 'uamo2', 'yivi1', 'fzxu2', 'byud1', 'godu', 'ysve', 'xmzs', 'byfg', 'anny', 'ugyu', 'ufyr', 'moyr', 'yihw'] 
+mapls = ['vip', 'godu', 'ysve', 'xmzs', 'byfg', 'anny', 'ugyu', 'ufyr'] 
 for amap in mapls:
 	exec(f'{amap}_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read("MU_{amap}.png"), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)')
 
@@ -92,8 +92,8 @@ def map_check(image):
 			conf = map_status["confidence"]
 	return map_result
 
-mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=WIDTH_WIN/1362, fy=WIDTH_WIN/1362, interpolation=cv2.INTER_AREA)
-Y_list = list(range(int(19*scaR), int(950*scaR), int(32.5*scaR)))
+mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+Y_list = list(range(int(29*scaR), int(1750*scaR), int(59*scaR)))
 map_cls = {'vip':0, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'godu':20, 'ufyr':23, 'moyr':27, 'yihw':28}
 def map_switch(hWnd, amap, level = 1, browser = 'vxx'):
 	if amap != 'ugyu':
@@ -227,11 +227,12 @@ login_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_login.png'), np.u
 start_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_start.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 relive_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_relive.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 yao_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yao.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-map_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_map.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+#map_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_map.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 #bag_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_bag.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 forge_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_forge.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 #yaoCheck_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yaoCheck.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 team_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_team.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+boss_alive = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_vipBoss.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 
 def diagClose(opt):
 	#from PIL import Image
@@ -248,6 +249,17 @@ def diagClose(opt):
 	relive_status = find_template(image, relive_img)
 	team_status = find_template(image, team_img)
 	yao_status = find_template(image[(int(0.897*HEIGHT_WIN)+delta_Y):(int(0.98*HEIGHT_WIN)+delta_Y), int(0.37*WIDTH_WIN):int(0.486*WIDTH_WIN)], yao_img)
+	if (relive_status is not None) and (relive_status["confidence"]>0.7):
+		print(strftime("%m-%d %H:%M", localtime()), "Dialog relive_status!")
+		bkg_click(opt['hWnd'], (0.419,0.593)) #免费复活
+		sleep(2)
+		bkg_click(opt['hWnd'], (0.405,0.568))
+		sleep(2)
+		if opt['buff'] == 2:
+			bkg_click(opt['hWnd'], coords_spec["map"]) # 打开地图
+			buff2(opt)
+		elif opt['buff'] > 2:
+			buff3(opt)
 	if opt['buff']== 1 and (team_status is not None) and (team_status["confidence"]>0.7) and team_status["result"][1]/(HEIGHT_WIN+delta_Y) > 0.8: # 入队申请
 		print("team request...\n", team_status["result"], team_status["confidence"])
 		bkg_click(opt['hWnd'], team_status["result"])
@@ -259,7 +271,6 @@ def diagClose(opt):
 		bkg_click(opt['hWnd'], coords_spec["bless"]) #(0.511,0.509))
 		sleep(2)
 		buff(opt)
-		
 	if (login_status is not None) and (login_status["confidence"]>0.6): # 重新登录
 		if not opt['fen'] and opt['buff']<2 and localtime(time()).tm_hour in [6, 7, 21, 22, 23]: opt['fen'] = 1
 		print(strftime("%m-%d %H:%M", localtime()), "relogin after 90s ...")
@@ -284,17 +295,6 @@ def diagClose(opt):
 		sleep(2)
 		bkg_click(opt['hWnd'], coords_spec["hand"])
 		sleep(2)
-	if (relive_status is not None) and (relive_status["confidence"]>0.7):
-		print(strftime("%m-%d %H:%M", localtime()), "Dialog relive_status!")
-		bkg_click(opt['hWnd'], (0.419,0.593)) #免费复活
-		sleep(2)
-		bkg_click(opt['hWnd'], (0.405,0.568))
-		sleep(2)
-		if opt['buff'] == 2:
-			bkg_click(opt['hWnd'], coords_spec["map"]) # 打开地图
-			buff2(opt)
-		elif opt['buff'] > 2:
-			buff3(opt)
 	if (close_status is not None) and (close_status["confidence"]>0.7):
 		#print("Dialog close_all!")
 		close_all(opt['hWnd'])
@@ -355,7 +355,7 @@ anny_door = {"right":(0.606, 0.599), "left":(0.513, 0.772), "top":(0.509, 0.601)
 def common_Play(opts):
 	if localtime(time()).tm_hour in [6, 21] and opts['buff']<2 and opts["map"] == 'ugyu' and opts['fen']: opts['fen'] = False
 	if localtime(time()).tm_hour in [0, 8] and opts['buff']<2 and opts["map"] == 'ugyu' and not opts['fen']: opts['fen'] = True
-	if opts["count"] == 0: opts.update(dict(zip('line turn'.split(), opts['ltC']))) #初始化
+	if opts["count"] == 0: opts.update(dict(zip('line turn count'.split(), opts['ltC']))) #初始化
 	try:
 		diagClose(opts) # 检测界面异常
 		difT = (datetime.now()-opts.get('bufT', datetime.now())).total_seconds()
