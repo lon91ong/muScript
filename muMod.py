@@ -16,9 +16,9 @@ def line_switch(hWnd, line):
 	bkg_click(hWnd, coords_spec["linesw"])
 	sleep(0.5)
 	if line < 5:
-		bkg_click(hWnd, (0.62, 0.67), True, 120) #向上拖动
+		bkg_click(hWnd, (0.62, 0.67), (0, 120)) #向上拖动
 	else:
-		bkg_click(hWnd, (0.62, 0.32), True, -120) # 向下拖动
+		bkg_click(hWnd, (0.62, 0.32), (0, -120)) # 向下拖动
 	sleep(0.5)
 	line = (line -3) if line > 4 else (line - 1)
 	bkg_click(hWnd, (0.59, 0.27 + 0.152*line)) #175 + 74 * (line -1)
@@ -63,9 +63,9 @@ def handAct(hWnd, top = False): # 打怪状态判断
 	hand_status = find_template(image[(int(0.459*HEIGHT_WIN)+delta_Y):(int(0.492*HEIGHT_WIN)+delta_Y), (int(0.96*WIDTH_WIN)+delta_X):(int(0.975*WIDTH_WIN)+delta_X)], hand_img)
 	act_status = find_template(image[(delta_Y + 1):(int(0.065*HEIGHT_WIN)+delta_Y), (int(0.39*WIDTH_WIN)+delta_X):(int(0.451*WIDTH_WIN)+delta_X)], act_img)
 	qiang_status = find_template(image, qiang_img) # 抢归属判断
-	red_dis = np.linalg.norm(np.array([24,25,196]) - image[(int(0.053*HEIGHT_WIN)+delta_Y), (int(0.453*WIDTH_WIN)+delta_X)], ord=1)
-	#if act_status is not None:print(act_status["result"], act_status["confidence"], red_dis, image[(int(0.053*HEIGHT_WIN)+delta_Y), int(0.453*WIDTH_WIN)])
-	#if hand_status is not None:print(hand_status["result"], hand_status["confidence"])
+	# Firefox:[195, 20, 20], Other:[20, 20, 195]
+	#if logLevel: print("Red array:", image[(int(0.053*HEIGHT_WIN)+delta_Y), (int(0.453*WIDTH_WIN)+delta_X)])
+	red_dis = np.linalg.norm(np.array([22,22,195]) - image[(int(0.053*HEIGHT_WIN)+delta_Y), (int(0.453*WIDTH_WIN)+delta_X)], ord=1)
 	if logLevel: print(f'Act:{"None" if act_status is None else format(act_status["confidence"], ".5f")}, Red:{format(red_dis, ".3f")}, Qiang:{(qiang_status is not None) and qiang_status["confidence"]>0.7}, Hand:{("None" if (hand_status is None) else format(hand_status["confidence"], ".5f"))}')
 	return ((((act_status is not None) and act_status["confidence"]>0.7) or red_dis < 10 ), ((qiang_status is not None) and qiang_status["confidence"]>0.7), ((hand_status is None) or hand_status["confidence"]<0.7))
 
@@ -79,7 +79,7 @@ def close_all(hWnd):
 		#print(f'Close all diag with {close_status["confidence"]}')
 		bkg_click(hWnd, tuple(np.array([(int(0.093*WIDTH_WIN)+delta_X), (delta_Y + 1)]) + np.array(close_status["result"])))
 
-mapls = 'vippysvexmzsbyfgdixwuilohldiuamoyblntmksfzxuyivibyudannysifgfuuiysgefzyaxisianvkgodutmthlmyuufyrhvlhmohwmiwumoyryihwufvk'
+mapls = 'vippysvexmzsbyfgdixwuilohldiuamoyblntmksfzxuyivibyudannysifgfuuiysgefzyaxisianvkjcuegodutmthlmyuufyrhvlhufmcmohwmiwumoyryihwufvkhzxw'
 ugyu_img = cv2.imdecode(np.frombuffer(piZ.read('MU_ugyu.png'), np.uint8), 1)
 mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 #for amap in mapls:
@@ -113,8 +113,8 @@ def map_check(image):
 		map_result = mapls[y_d*4:(y_d+1)*4]
 	return map_result
 
-Y_list = list(range(int(29*scaR), int(1750*scaR), int(59*scaR)))
-map_cls = {'vipp':0, 'ysve':1, 'xmzs':2, 'byfg':3, 'dixw1':(4, 1), 'godu':20, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'ufyr':23, 'moyr':27, 'yihw':28}
+Y_list = list(range(int(30*scaR), int(1980*scaR), int(60*scaR)))
+map_cls = {'vipp':0, 'ysve':1, 'xmzs':2, 'byfg':3, 'dixw1':(4, 1), 'godu':21, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'ufyr':24, 'moyr':29, 'yihw':30}
 def map_switch(hWnd, amap, browser, level = 1):
 	if amap != 'ugyu':
 		map_y = Y_list[map_cls[amap][0]] if type(map_cls[amap]) is list else Y_list[map_cls[amap]]
@@ -135,7 +135,7 @@ def map_switch(hWnd, amap, browser, level = 1):
 				else:
 					dragDelta = int(0.12*HEIGHT_WIN) if dis > 0 else int(-0.12*HEIGHT_WIN)
 				if abs(dis) > 0.25 * HEIGHT_WIN:
-					bkg_click(hWnd, (0.192, 0.445), True, dragDelta); sleep(2)
+					bkg_click(hWnd, (0.192, 0.445), (0, dragDelta)); sleep(2)
 				else:
 					break
 		bkg_click(hWnd, (0.192, 0.445 - dis/HEIGHT_WIN)); sleep(0.5)
@@ -148,7 +148,7 @@ def map_switch(hWnd, amap, browser, level = 1):
 		map_switch(hWnd, 'godu', browser)
 		sleep(2)
 		bkg_click(hWnd, coords_spec["map"]); sleep(0.5) # 打开地图
-		bkg_click(hWnd, coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
+		bkg_click(hWnd, coords_spec["dragP"], (0, -1*int(0.4*HEIGHT_WIN))); sleep(0.5) # 放大
 		if browser in ['vxx', 'Chrome']:	#vxx:小程序
 			bkg_click(hWnd, (0.575,0.51))
 			bkg_click(hWnd, coords_spec["close_map"]) # 关闭地图
@@ -206,7 +206,7 @@ def buff3(opt):
 	er = 'naLan' if opt['buff'] == 3 else 'jiuXin'
 	nai = {'naLan':[-65, (0.192, 0.412), 1, (0.696, 0.47), 27], 'jiuXin':[-92, (0.192, 0.637), 3, (0.628, 0.619), 13]} # ['naLan', 'jiuXin']
 	bkg_click(opt['hWnd'], coords_spec["map"]); sleep(0.5) # 打开地图
-	bkg_click(opt['hWnd'], (0.192, 0.5), True, nai[er][0]) # Chrome 65
+	bkg_click(opt['hWnd'], (0.192, 0.5), (0, nai[er][0])) # Chrome 65
 	sleep(2)
 	bkg_click(opt['hWnd'], nai[er][1]); sleep(1)
 	line_switch(opt['hWnd'], nai[er][2]); sleep(0.5)
@@ -416,23 +416,23 @@ def common_Play(opts):
 				#if match_result is not None:
 				#	coords_spec["dragP"] = (int(match_result['result'][0]+0.867*WIDTH_WIN)+delta_X, int(match_result['result'][1]+0.682*HEIGHT_WIN)+delta_Y)
 				#	if logLevel: print("Drag Coords:", coords_spec["dragP"], -1*int(0.04*HEIGHT_WIN))
-				#bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.04*HEIGHT_WIN)); sleep(0.5) # 放大
+				#bkg_click(opts["hWnd"], coords_spec["dragP"], (0, -1*int(0.04*HEIGHT_WIN))); sleep(0.5) # 放大
 				bkg_click(opts["hWnd"], coords_spec["dragP1"], count = 4); sleep(0.5) # 放大
 				image = loc_capture(opts["hWnd"], opts['top'])
 			player_des = getPlayer(image)
 			if opts["map"] == 'anny': #安宁池特例
 				if player_des is None and opts["turn"] != 0:
-					bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
+					bkg_click(opts["hWnd"], coords_spec["dragP"], (0, -1*int(0.4*HEIGHT_WIN))); sleep(0.5) # 放大
 					image = loc_capture(opts["hWnd"], opts['top'])
 					player_des = getPlayer(image)
 				if player_des is None:
-					bkg_click(opts["hWnd"], (0.878, 0.312), True, 200) # 缩小
+					bkg_click(opts["hWnd"], (0.878, 0.312), (0, int(0.4*HEIGHT_WIN))) # 缩小
 					sleep(0.3)
 				elif (opts["annyDoor"] != "top" and 0.49 < player_des["result"][0]/WIDTH_WIN < 0.625) or (opts["annyDoor"] == "top" and player_des["result"][1]/HEIGHT_WIN > 0.4):
-					bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
+					bkg_click(opts["hWnd"], coords_spec["dragP"], (0, -1*int(0.4*HEIGHT_WIN))); sleep(0.5) # 放大
 					bkg_click(opts["hWnd"], anny_door[opts["annyDoor"]])
 					sleep(7.5)
-					bkg_click(opts["hWnd"], (0.878, 0.312), True, int(0.4*HEIGHT_WIN)) # 缩小
+					bkg_click(opts["hWnd"], (0.878, 0.312), (0, int(0.4*HEIGHT_WIN))) # 缩小
 					sleep(0.5)
 					bkg_click(opts["hWnd"], opts["coords"][opts["turn"]])
 					sleep(0.5 if opts["annyDoor"] == "right" else opts["tsleep"][opts["turn"]])
