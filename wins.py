@@ -13,14 +13,14 @@ def reSize(x = 0, y = 44, width = WIDTH_WIN, hwnd = 0):
 	delta_X = x
 	delta_Y = y
 	if hwnd > 0:
-		SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + (delta_X)*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X, 2 | 16 | 64) #改大小，位置不动
+		SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + delta_X*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X, 2 | 16 | 64) #改大小，位置不动
 
 # 定义鼠标事件的参数
 MK_LBUTTON = 1 # 鼠标左键, 右键为2
 MOUSE_MOVE = 512 #0x0001  # 鼠标移动
 MOUSE_LEFTDOWN = 513 #0x0002  # 左键按下
 MOUSE_LEFTUP = 514 #0x0004  # 左键释放
-def bkg_click(hWnd, coord, drag = 0, delta = 0, count = 1):
+def bkg_click(hWnd, coord, drag = (0, 0), count = 2):
 	# coord:点击相对坐标元组,(x,y)
 	# drag:拖动标识, 1:纵向, 2:横向
 	# count:连续点击次数
@@ -32,18 +32,14 @@ def bkg_click(hWnd, coord, drag = 0, delta = 0, count = 1):
 	if GetClassName(hWnd) == 'Intermediate D3D Window': #无法接收鼠标事件
 		hWnd = GetParent(hWnd)
 		if x==479 and y==326: x -= 2 #圣域传送员修正
-	while count > 0:
+	while count := count-1 :
 		lParam = x | y <<16
 		PostMessage(hWnd, MOUSE_LEFTDOWN, MK_LBUTTON, lParam)
-		if drag and count == 1:
-			if int(drag)==1: #纵向
-				lParam = x | (y + delta) <<16
-			if drag==2: #横向
-				lParam = (x + delta) | y <<16
+		if drag !=(0, 0) and count == 1:
+			lParam = (x + drag[0]) | (y + drag[1]) <<16
 			PostMessage(hWnd,MOUSE_MOVE, MK_LBUTTON, lParam)
 		PostMessage(hWnd, MOUSE_LEFTUP, MK_LBUTTON, lParam)
-		sleep((300 if count > 1 else 100)/1000)
-		count -= 1
+		sleep((200 if count > 1 else 100)/1000)
 
 from win32print import GetDeviceCaps
 from win32gui import SetWindowPos, GetWindowRect, GetDC
@@ -71,7 +67,7 @@ def get_windows(XY=False):
 					hwnd = FindWindowEx(hwnd, None, 'Intermediate D3D Window', None)
 				elif 'Mozilla' in title:
 					reSize(5, 29); browser = 'Firefox'
-					SetWindowPos(hwnd, 1, 0, 0, WIDTH_WIN + (delta_X+1)*2+1, int(WIDTH_WIN*9/16) + delta_Y + delta_X+2, 2 | 16 | 64) #改大小，位置不动
+					SetWindowPos(hwnd, 1, 0, (prime_screen_height - int(WIDTH_WIN*9/16) - delta_Y - 38), WIDTH_WIN + delta_X*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X, 16 | 64) #主屏左下角, Firefox
 				print(f'Hwnd: {hwnd}, {browser} Mode!')
 				#print("Title:", title, "\nSize info:", WIDTH_WIN+delta_X*2, int(WIDTH_WIN*9/16) + delta_Y + delta_X)
 				rect = dict(zip( 'left top right bottom'.split(), GetWindowRect(hwnd)))
@@ -121,9 +117,10 @@ def screezeCap(hWnd, top = False):
 	if top: # 置顶
 		SetWindowPos(hWnd, 0, 0, 0, 0, 0, 16 | 64) 
 		sleep(0.5)
-	image = None; n = 4 # 有失败可能，三次尝试
-	while image is None and (n:=n-1) > 0: 
+	image = None; n = 3 # 有失败可能，多次尝试
+	while image is None and n:=n-1: 
 		image = np.asarray(screenshot(region=[rect['left'], rect['top'], rect['right'] - rect['left'], rect['bottom'] - rect['top']]))
+	image = image[:, :, ::-1] #反转色彩通道, Firefox需要
 	if top: # 置顶
 		SetWindowPos(hWnd, -2, 0, 0, 0, 0, 16 | 64) # 下沉窗口
 	return image
@@ -135,13 +132,13 @@ def dxcamCap(hWnd, top = False):
 	rect = dict(zip('left top right bottom'.split(), GetWindowRect(hWnd)))
 	# 窗口截图
 	camera = dxcam.create(output_idx=(0 if rect['right'] <= prime_screen_width else 1), output_color="BGR")
-	image = None; n = 4 # 有失败可能，三次尝试
-	while image is None and (n:=n-1) > 0:
+	image = None; n = 3 # 有失败可能，多次尝试
+	while image is None and n:=n-1:
 		if rect['right'] <= prime_screen_width: #主屏
 			image = camera.grab(region=(rect['left'],rect['top'], rect['right'], rect['bottom'])) #第二屏修正
 		else: #第二屏
 			image = camera.grab(region=(rect['left']-prime_screen_width,rect['top'],rect['right']-prime_screen_width,rect['bottom'])) #第二屏修正
-			#image = image[:, :, ::-1] #反转色彩通道
+	image = image[:, :, ::-1] #反转色彩通道，Firefox需要
 	return image
 
 if __name__ == "__main__":
