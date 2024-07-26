@@ -1,9 +1,9 @@
 # 使用说明
 适配python 3.11版本，精简包embedded[加工一下](https://stackoverflow.com/questions/42666121/pip-with-embedded-python)也行，参考后文
 ``` cmd
-wins.py  #基础的点击、截图、窗口句柄等功能函数
-muMod.py  #功能函数
-Run.py    #入口
+wins.py  #基础的点击、截图、窗口句柄等功能函数，须调参数：WIDTH_WIN, delta_X, delta_Y
+muMod.py  #功能函数, dxcamCap适用于多屏，但是兼容性差易报错内存暴力写入, screezeCap只适用于单主屏，兼容性好
+Run.py    #入口, 1100四个开关参数, Level圣域层数
 #运行方式
 python Run.py #小程序窗口
 python Run.py XY #浏览器窗口
