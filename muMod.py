@@ -7,10 +7,11 @@ from datetime import datetime
 from findimage import find_template, find_all_template
 from wins import WIDTH_WIN, delta_X, delta_Y, bkg_click, dxcamCap as loc_capture #screezeCap or dxcamCap 二选一 
 
+logLevel = 1
 scaR = WIDTH_WIN/1600; scaR2 = WIDTH_WIN/865
 HEIGHT_WIN = int(0.5625*WIDTH_WIN)
 # 特殊作用坐标
-coords_spec={"map":(0.876,0.111), "close_map":(0.118,0.109), "vip":(0.2,0.193), "checkin":[0.52, 0.803], "hand":(0.97,0.457), "pack":(0.973,0.36), "off":(0.98,0.037), "recycle1":(0.875, 0.918), "recycle2":(0.85, 0.877), "red":(0.452, 0.053), "linesw":(0.95,0.967), "bless":(0.805,0.878)}
+coords_spec={"map":(0.876,0.111), "close_map":(0.118,0.109), "dragP":(0.8778, 0.71), "dragP1":(0.8778, 0.66), "checkin":[0.52, 0.803], "hand":(0.97,0.457), "pack":(0.973,0.36), "off":(0.98,0.037), "recycle1":(0.875, 0.918), "recycle2":(0.85, 0.877), "red":(0.452, 0.053), "linesw":(0.95,0.967), "bless":(0.805,0.878)}
 def line_switch(hWnd, line):
 	bkg_click(hWnd, coords_spec["linesw"])
 	sleep(0.5)
@@ -59,13 +60,14 @@ def handAct(hWnd, top = False): # 打怪状态判断
 	# 返回值(怪, 抢, 手)
 	global hand_img, act_img
 	image = loc_capture(hWnd, top)
-	hand_status = find_template(image[(int(0.459*HEIGHT_WIN)+delta_Y):(int(0.492*HEIGHT_WIN)+delta_Y), int(0.96*WIDTH_WIN):int(0.975*WIDTH_WIN)], hand_img)
-	act_status = find_template(image[(delta_Y + 1):(int(0.065*HEIGHT_WIN)+delta_Y), int(0.39*WIDTH_WIN):int(0.451*WIDTH_WIN)], act_img)
+	hand_status = find_template(image[(int(0.459*HEIGHT_WIN)+delta_Y):(int(0.492*HEIGHT_WIN)+delta_Y), (int(0.96*WIDTH_WIN)+delta_X):(int(0.975*WIDTH_WIN)+delta_X)], hand_img)
+	act_status = find_template(image[(delta_Y + 1):(int(0.065*HEIGHT_WIN)+delta_Y), (int(0.39*WIDTH_WIN)+delta_X):(int(0.451*WIDTH_WIN)+delta_X)], act_img)
 	qiang_status = find_template(image, qiang_img) # 抢归属判断
-	red_dis = np.linalg.norm(np.array([24,25,196]) - image[(int(0.053*HEIGHT_WIN)+delta_Y), int(0.453*WIDTH_WIN)], ord=1)
+	red_dis = np.linalg.norm(np.array([24,25,196]) - image[(int(0.053*HEIGHT_WIN)+delta_Y), (int(0.453*WIDTH_WIN)+delta_X)], ord=1)
 	#if act_status is not None:print(act_status["result"], act_status["confidence"], red_dis, image[(int(0.053*HEIGHT_WIN)+delta_Y), int(0.453*WIDTH_WIN)])
 	#if hand_status is not None:print(hand_status["result"], hand_status["confidence"])
-	return ((((act_status is not None) and act_status["confidence"]>0.7) or red_dis < 10 ), ((qiang_status is None) or qiang_status["confidence"]<0.7), ((hand_status is None) or hand_status["confidence"]<0.56))
+	if logLevel: print(f'Act:{"None" if act_status is None else format(act_status["confidence"], ".5f")}, Red:{format(red_dis, ".3f")}, Qiang:{(qiang_status is not None) and qiang_status["confidence"]>0.7}, Hand:{("None" if (hand_status is None) else format(hand_status["confidence"], ".5f"))}')
+	return ((((act_status is not None) and act_status["confidence"]>0.7) or red_dis < 10 ), ((qiang_status is not None) and qiang_status["confidence"]>0.7), ((hand_status is None) or hand_status["confidence"]<0.7))
 
 close_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_close.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 def close_all(hWnd):
@@ -77,35 +79,53 @@ def close_all(hWnd):
 		#print(f'Close all diag with {close_status["confidence"]}')
 		bkg_click(hWnd, tuple(np.array([(int(0.093*WIDTH_WIN)+delta_X), (delta_Y + 1)]) + np.array(close_status["result"])))
 
-mapls = ['vip', 'godu', 'ysve', 'xmzs', 'byfg', 'anny', 'ugyu', 'ufyr'] 
-for amap in mapls:
-	exec(f'{amap}_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read("MU_{amap}.png"), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)')
+mapls = 'vippysvexmzsbyfgdixwuilohldiuamoyblntmksfzxuyivibyudannysifgfuuiysgefzyaxisianvkgodutmthlmyuufyrhvlhmohwmiwumoyryihwufvk'
+ugyu_img = cv2.imdecode(np.frombuffer(piZ.read('MU_ugyu.png'), np.uint8), 1)
+mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+#for amap in mapls:
+#	exec(f'{amap}_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read("MU_{amap}.png"), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)')
 
 def map_check(image):
 	map_result = ''
 	conf = 0.5
-	for amap in mapls:
-		map_status = find_template(image[(int(0.085*HEIGHT_WIN)+delta_Y):(int(0.136*HEIGHT_WIN)+delta_Y), int(0.277*WIDTH_WIN):int(0.405*WIDTH_WIN)], globals()[amap +'_img'])
-		if map_status is not None and map_status["confidence"] > conf:
-			#print(f'map:{amap}_img, confidence:{map_status["confidence"]}')
-			map_result = amap
-			conf = map_status["confidence"]
+	#if logLevel: cv2.imwrite(f'map_{delta_Y}.png', image[(int(0.099*HEIGHT_WIN)+delta_Y):(int(0.132*HEIGHT_WIN)+delta_Y), int(0.297*WIDTH_WIN):int(0.36*WIDTH_WIN)])
+	map_status = find_template(image[(int(0.09*HEIGHT_WIN)+delta_Y):(int(0.14*HEIGHT_WIN)+delta_Y), int(0.29*WIDTH_WIN):int(0.35*WIDTH_WIN)], ugyu_img)
+	if map_status is not None and map_status["confidence"] > conf:
+		if logLevel: print(f'map:ugyu, confidence:{format(map_status["confidence"], ".5f")}')
+		map_result = 'ugyu'
+	else:
+		thresh1 = np.array([110, 110, 110], dtype = "uint8")  # 目标颜色阈值
+		thresh2 = np.array([255, 255, 255], dtype = "uint8") 
+		amap_mask = cv2.inRange(image[(int(0.099*HEIGHT_WIN)+delta_Y):(int(0.132*HEIGHT_WIN)+delta_Y), int(0.297*WIDTH_WIN):int(0.344*WIDTH_WIN)], thresh1, thresh2) #三字宽
+		bmap_mask = cv2.inRange(image[(int(0.099*HEIGHT_WIN)+delta_Y):(int(0.132*HEIGHT_WIN)+delta_Y), int(0.297*WIDTH_WIN):int(0.36*WIDTH_WIN)], thresh1, thresh2) #四字宽
+		mapl_mask = cv2.inRange(mapPanl, thresh1, thresh2)
+		match_results = find_all_template(mapl_mask, amap_mask, 0.4, 2)	#先找三字
+		if len(match_results) == 1:
+			y_d = int(np.floor(match_results[0]['result'][1]/scaR/59))
+		elif len(match_results) > 1:
+			match_result = find_template(mapl_mask, bmap_mask)	#再找四字
+			if match_result is None:
+				y_d = int(np.floor(match_results[1]['result'][1]/scaR/59))
+			else:
+				y_d = int(np.floor(match_result['result'][1]/scaR/59))
+		else: # fail
+			y_d = 0 #vipp
+		map_result = mapls[y_d*4:(y_d+1)*4]
 	return map_result
 
-mapPanl = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MapPanl.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 Y_list = list(range(int(29*scaR), int(1750*scaR), int(59*scaR)))
-map_cls = {'vip':0, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'godu':20, 'ufyr':23, 'moyr':27, 'yihw':28}
-def map_switch(hWnd, amap, level = 1, browser = 'vxx'):
+map_cls = {'vipp':0, 'ysve':1, 'xmzs':2, 'byfg':3, 'dixw1':(4, 1), 'godu':20, 'yivi1':(11, 1), 'uamo1':(7, 1), 'byud1':(12, 1), 'anny':13, 'ufyr':23, 'moyr':27, 'yihw':28}
+def map_switch(hWnd, amap, browser, level = 1):
 	if amap != 'ugyu':
 		map_y = Y_list[map_cls[amap][0]] if type(map_cls[amap]) is list else Y_list[map_cls[amap]]
 		n = 6; dis = HEIGHT_WIN
-		while (n:=n-1) > 0:
-			image = loc_capture(hWnd)[int(0.163*HEIGHT_WIN + delta_Y):int(0.725*HEIGHT_WIN + delta_Y), int(0.11*WIDTH_WIN + delta_X):int(0.216*WIDTH_WIN + delta_X)]
+		while n:=n-1 :
+			image = loc_capture(hWnd)[int(0.163*HEIGHT_WIN + delta_Y):int(0.715*HEIGHT_WIN + delta_Y), int(0.112*WIDTH_WIN + delta_X):int(0.216*WIDTH_WIN + delta_X)]
 			#cv2.imwrite(f'capturePart{n}.png', image)
 			match_result = find_template(mapPanl, image)
 			if match_result is None:
 				#bkg_click(hWnd, coords_spec["map"]) # 打开地图
-				#print('None')
+				if logLevel: print('None')
 				continue
 			else:
 				dis = int(match_result['result'][1]) - map_y
@@ -121,20 +141,24 @@ def map_switch(hWnd, amap, level = 1, browser = 'vxx'):
 		bkg_click(hWnd, (0.192, 0.445 - dis/HEIGHT_WIN)); sleep(0.5)
 		if type(map_cls[amap]) is list:
 			bkg_click(hWnd, (0.192,0.445+(0.05 * map_cls[amap][1]) - dis/HEIGHT_WIN)); sleep(0.5)
-		if amap == 'vip':
+		if amap == 'vipp':
 			sleep(9)
 			bkg_click(hWnd, coords_spec["checkin"])
 	else:
-		map_switch(hWnd, 'godu')
-		bkg_click(hWnd, coords_spec["map"]) # 打开地图
-		bkg_click(hWnd, (0.8785, 0.712), True, -200); sleep(0.5) # 放大
+		map_switch(hWnd, 'godu', browser)
+		sleep(2)
+		bkg_click(hWnd, coords_spec["map"]); sleep(0.5) # 打开地图
+		bkg_click(hWnd, coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
 		if browser in ['vxx', 'Chrome']:	#vxx:小程序
 			bkg_click(hWnd, (0.575,0.51))
+			bkg_click(hWnd, coords_spec["close_map"]) # 关闭地图
+			sleep(3)
+			bkg_click(hWnd, (0.665,0.41)) # 圣域传送员
 		elif browser in ['Firefox', 'Edge']:
-			bkg_click(hWnd, (0.565,0.51))
-		bkg_click(hWnd, coords_spec["close_map"]) # 关闭地图
-		sleep(3)
-		bkg_click(hWnd, (0.665,0.41)) # 圣域传送员
+			bkg_click(hWnd, (0.57,0.512))
+			bkg_click(hWnd, coords_spec["close_map"]) # 关闭地图
+			sleep(3)
+			bkg_click(hWnd, (0.6,0.35)) # 圣域传送员
 		sleep(1)
 		bkg_click(hWnd, (0.376,0.32+0.064*(level-2))) # 圣域2, 等差0.064
 		sleep(0.5)
@@ -152,7 +176,7 @@ def buff(opt):
 	bkg_click(opt["hWnd"], coords_spec["hand"])  # 点击手动
 
 def buff2(opt):
-	map_switch(opt['hWnd'], 'ufyr') #深渊
+	map_switch(opt['hWnd'], 'ufyr', opt["browser"]) #深渊
 	sleep(2)
 	clickLs = [(0.02,0.25), (0.136,0.19), (0.775,0.31), (0.565,0.615), (0.112,0.127)] #入队
 	for coord in clickLs:
@@ -174,10 +198,10 @@ def buff2(opt):
 		sleep(0.5)
 	if opt['turn'] > 0: opt['turn']-=1
 	bkg_click(opt["hWnd"], coords_spec["map"]); sleep(0.5) # 打开地图
-	map_switch(opt["hWnd"], opt["map"], opt["Level"], opt["browser"]); sleep(0.5)
+	map_switch(opt["hWnd"], opt["map"], opt["browser"], opt["Level"]); sleep(0.5)
 	line_switch(opt["hWnd"], opt['line']); sleep(0.5)
 
-tNai_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_tNai.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+tNai_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_tNai.png'), np.uint8), 1), None, fx=scaR2, fy=scaR2, interpolation=cv2.INTER_AREA)
 def buff3(opt):
 	er = 'naLan' if opt['buff'] == 3 else 'jiuXin'
 	nai = {'naLan':[-65, (0.192, 0.412), 1, (0.696, 0.47), 27], 'jiuXin':[-92, (0.192, 0.637), 3, (0.628, 0.619), 13]} # ['naLan', 'jiuXin']
@@ -206,10 +230,10 @@ def buff3(opt):
 		bkg_click(opt['hWnd'], tNai_status['result']); sleep(0.5) #(0.31,0.45)
 	sleep(1)
 	bkg_click(opt["hWnd"], coords_spec["map"]); sleep(0.5) # 打开地图
-	map_switch(opt["hWnd"], opt["map"], opt["Level"], opt["browser"]); sleep(0.5)
+	map_switch(opt["hWnd"], opt["map"], opt["browser"], opt["Level"]); sleep(0.5)
 	line_switch(opt["hWnd"], opt['line']); sleep(0.5)
 
-trans_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_trans.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+trans_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_trans.png'), np.uint8), 1), None, fx=scaR2, fy=scaR2, interpolation=cv2.INTER_AREA)
 def buyYao(opt, red):
 	bkg_click(opt['hWnd'], ((0.405 if red else 0.463), 0.938))
 	sleep(1)
@@ -231,8 +255,9 @@ yao_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yao.png'), np.uint8
 #bag_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_bag.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 forge_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_forge.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 #yaoCheck_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_yaoCheck.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-team_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_team.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
-boss_alive = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_vipBoss.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+team_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_team.png'), np.uint8), 1), None, fx=scaR2, fy=scaR2, interpolation=cv2.INTER_AREA)
+boss_alive = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_boss.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
+drag_img = cv2.resize(cv2.imdecode(np.frombuffer(piZ.read('MU_drag.png'), np.uint8), 1), None, fx=scaR, fy=scaR, interpolation=cv2.INTER_AREA)
 
 def diagClose(opt):
 	#from PIL import Image
@@ -308,12 +333,12 @@ def diagClose(opt):
 		if not opt['vvip']:
 			bkg_click(opt['hWnd'], coords_spec["map"]); sleep(0.5) # 打开地图
 			if opt['map'] == 'ugyu':
-				map_switch(opt["hWnd"], opt["map"], opt["Level"])
+				map_switch(opt["hWnd"], opt["map"], opt["browser"], opt["Level"])
 			else:
-				map_switch(opt["hWnd"], opt["map"])
+				map_switch(opt["hWnd"], opt["map"], opt["browser"])
 			sleep(1)
 			line_switch(opt['hWnd'], opt['line']) #切回原来线路
-			if opt["map"] == 'vip' and opt["turn"] > 0:
+			if opt["map"] == 'vipp' and opt["turn"] > 0:
 				bkg_click(opt["hWnd"], coords_spec["map"]); sleep(0.5) # 打开地图
 				bkg_click(opt["hWnd"], opt["coords"][opt["turn"]])
 				sleep(30)
@@ -355,7 +380,7 @@ anny_door = {"right":(0.606, 0.599), "left":(0.513, 0.772), "top":(0.509, 0.601)
 def common_Play(opts):
 	if localtime(time()).tm_hour in [6, 21] and opts['buff']<2 and opts["map"] == 'ugyu' and opts['fen']: opts['fen'] = False
 	if localtime(time()).tm_hour in [0, 8] and opts['buff']<2 and opts["map"] == 'ugyu' and not opts['fen']: opts['fen'] = True
-	if opts["count"] == 0: opts.update(dict(zip('line turn count'.split(), opts['ltC']))) #初始化
+	if opts["count"] == 0: opts.update(dict(zip('line turn'.split(), opts['ltC']))) #初始化
 	try:
 		diagClose(opts) # 检测界面异常
 		difT = (datetime.now()-opts.get('bufT', datetime.now())).total_seconds()
@@ -377,34 +402,37 @@ def common_Play(opts):
 			bkg_click(opts["hWnd"], coords_spec["map"]); sleep(0.5) # 打开地图
 			image = loc_capture(opts["hWnd"], opts['top'])
 			map_result = map_check(image)
-			if map_result and map_result != opts["map"]:
+			if logLevel: print("Map Now:", map_result)
+			if map_result != opts["map"]:
 				if opts['map'] == 'ugyu':
-					map_switch(opts["hWnd"], opts["map"], opts["Level"], opts["browser"])
+					map_switch(opts["hWnd"], opts["map"], opts["browser"], opts["Level"])
 				else:
-					map_switch(opts["hWnd"], opts["map"])
+					map_switch(opts["hWnd"], opts["map"], opts["browser"])
 				sleep(1)
 				line_switch(opts["hWnd"], opts["line"]) #切回原来线路
 				return
-			if opts["map"] in ['vip', 'ugyu']: #圣域
-				bkg_click(opts["hWnd"], (0.8785, 0.712), True, -20); sleep(0.5) # 放大
+			if opts["map"] in ['vipp', 'ugyu']: #圣域
+				#match_result = find_template(image[(int(0.682*HEIGHT_WIN)+delta_Y):(int(0.732*HEIGHT_WIN)+delta_Y), (int(0.867*WIDTH_WIN)+delta_X):(int(0.888*WIDTH_WIN)+delta_X)], drag_img)
+				#if match_result is not None:
+				#	coords_spec["dragP"] = (int(match_result['result'][0]+0.867*WIDTH_WIN)+delta_X, int(match_result['result'][1]+0.682*HEIGHT_WIN)+delta_Y)
+				#	if logLevel: print("Drag Coords:", coords_spec["dragP"], -1*int(0.04*HEIGHT_WIN))
+				#bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.04*HEIGHT_WIN)); sleep(0.5) # 放大
+				bkg_click(opts["hWnd"], coords_spec["dragP1"], count = 4); sleep(0.5) # 放大
 				image = loc_capture(opts["hWnd"], opts['top'])
 			player_des = getPlayer(image)
 			if opts["map"] == 'anny': #安宁池特例
 				if player_des is None and opts["turn"] != 0:
-					bkg_click(opts["hWnd"], (0.878, 0.712), True, -200) # 放大
-					sleep(0.5)
+					bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
 					image = loc_capture(opts["hWnd"], opts['top'])
 					player_des = getPlayer(image)
 				if player_des is None:
 					bkg_click(opts["hWnd"], (0.878, 0.312), True, 200) # 缩小
 					sleep(0.3)
 				elif (opts["annyDoor"] != "top" and 0.49 < player_des["result"][0]/WIDTH_WIN < 0.625) or (opts["annyDoor"] == "top" and player_des["result"][1]/HEIGHT_WIN > 0.4):
-#					print('rate:', player_des["result"][1]/HEIGHT_WIN)
-					bkg_click(opts["hWnd"], (0.878, 0.712), True, -200) # 放大
-					sleep(0.5)
+					bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.4*HEIGHT_WIN)); sleep(0.5) # 放大
 					bkg_click(opts["hWnd"], anny_door[opts["annyDoor"]])
 					sleep(7.5)
-					bkg_click(opts["hWnd"], (0.878, 0.312), True, 200) # 缩小
+					bkg_click(opts["hWnd"], (0.878, 0.312), True, int(0.4*HEIGHT_WIN)) # 缩小
 					sleep(0.5)
 					bkg_click(opts["hWnd"], opts["coords"][opts["turn"]])
 					sleep(0.5 if opts["annyDoor"] == "right" else opts["tsleep"][opts["turn"]])
@@ -421,19 +449,18 @@ def common_Play(opts):
 					if dis < min_dis:
 						min_dis = dis
 						opts["turn"] = i
-			#		elif i == len(opts["coords"]) and min_dis > 50:	# 都挺远, 安宁池特例
-			#			opts["turn"] = 0
+			dx = int(0.05*WIDTH_WIN); dy = int(0.1*HEIGHT_WIN)
 			if opts['Boss']: #红怪
-				x_boss, y_boss = int(opts["coords"][opts["Boss"]][0]*WIDTH_WIN), int(opts["coords"][opts["Boss"]][1]*HEIGHT_WIN) + delta_Y
-				match_result = find_template(image[(y_boss-50):(y_boss+50), (x_boss-36):(x_boss+36)], boss_alive)
-				#print("Before:", opts["bound"], opts["turn"], match_result["confidence"])
+				x_boss, y_boss = int(opts["coords"][opts["Boss"]][0]*WIDTH_WIN) + delta_X, int(opts["coords"][opts["Boss"]][1]*HEIGHT_WIN) + delta_Y
+				match_result = find_template(image[(y_boss-dy):(y_boss+dy), (x_boss-dx):(x_boss+dx)], boss_alive)
+				if logLevel: print("Pre:", opts["bound"], opts["turn"], ("None" if match_result is None else format(match_result["confidence"], '.5f')))
 				if len(opts['bound']) == 4: # 4个点来回刷, 需确定opts["tsleep"]
 					if opts["turn"] in [1,4] and opts["bound"][3] > 0:
 						opts["bound"][3] -= 1
-					if match_result is not None and match_result["confidence"] > 0.8 and opts["bound"][3] == 0:
+					if match_result is not None and match_result["confidence"] > 0.86 and opts["bound"][3] == 0:
 						opts["bound"][:2] = [1,4] # 坐标序列上下限
 						opts["bound"][3] = 2 # 设置Boss数量
-					elif (match_result is None or match_result["confidence"] < 0.8) and opts["bound"][3] == 0:
+					elif (match_result is None or match_result["confidence"] < 0.86) and opts["bound"][3] == 0:
 						opts["bound"][:2] = [2,3]
 						if opts['linesw']: # 切线
 							bkg_click(opts["hWnd"], coords_spec["close_map"]) # 关闭地图
@@ -459,8 +486,8 @@ def common_Play(opts):
 					#	sleep(3)
 					elif not opts["bound"][0] <= opts["turn"] + opts["bound"][2] <= opts["bound"][1]:
 						opts["bound"][2] = opts["bound"][2]*(-1) #切换方向
-				elif opts["map"] not in ['vip', 'ugyu']: # 2+1点
-					if match_result is not None and match_result["confidence"] > 0.8:
+				elif opts["map"] not in ['vipp', 'ugyu']: # 2+1点
+					if match_result is not None and match_result["confidence"] > 0.86:
 						opts["bound"][1] = opts["Boss"] # 坐标序列上下限
 					elif opts['linesw'] and opts["count"] %5 == 0: # 切线
 						bkg_click(opts["hWnd"], coords_spec["close_map"]) # 关闭地图
@@ -498,8 +525,9 @@ def common_Play(opts):
 						if not opts['follow']:
 							while opts["turn"] < opts['bound'][1]:
 								x_boss, y_boss = int(opts["coords"][opts["turn"]][0]*WIDTH_WIN), int(opts["coords"][opts["turn"]][1]*HEIGHT_WIN) + delta_Y
-								match_result = find_template(image[(y_boss-50):(y_boss+50), (x_boss-36):(x_boss+36)], boss_alive)
-								if match_result is None or match_result["confidence"] < 0.7:
+								match_result = find_template(image[(y_boss-dy):(y_boss+dy), (x_boss-dx):(x_boss+dx)], boss_alive)
+								if logLevel: print(f'Follow: {opts["follow"]}, Turn: {opts["turn"]}, {"None" if match_result is None else format(match_result["confidence"], ".5f")}')
+								if match_result is None or match_result["confidence"] < 0.86:
 									#if match_result is not None:print("Turn:", opts["turn"], "Conf:", match_result["confidence"])
 									opts["turn"] += 1
 								else:
@@ -527,7 +555,7 @@ def common_Play(opts):
 					sleep(ts_loc)
 				else: # 无固定间隔
 					tn = 0
-					if opts["map"] in ['vip', 'ugyu'] and opts["turn"] > 0:
+					if opts["map"] in ['vipp', 'ugyu'] and opts["turn"] > 0:
 						x0, y0 = opts["last_coord"][0]*WIDTH_WIN, opts["last_coord"][1]*HEIGHT_WIN + delta_Y
 						x, y = opts["coords"][opts["turn"]][0]*WIDTH_WIN, opts["coords"][opts["turn"]][1]*HEIGHT_WIN + delta_Y
 						ts = max(6, np.sqrt(np.linalg.norm(np.array((x, y)) - np.array((x0, y0)), ord=1)))
@@ -540,7 +568,7 @@ def common_Play(opts):
 				
 				opts["last_coord"] = opts["coords"][opts["turn"]]
 				opts["last_time"] = time()
-				if opts["turn"] == 0 and not opts["map"] in ['anny', 'vip']:
+				if opts["turn"] == 0 and not opts["map"] in ['anny', 'vipp']:
 					opts["bound"][0] = 1
 			else:
 				bkg_click(opts["hWnd"], coords_spec["close_map"]) # 关闭地图
@@ -559,10 +587,11 @@ def common_Play(opts):
 			recyFen(opts["hWnd"], opts["count"], opts['fen'])
 		elif act_stat[0] and not act_stat[2]:
 			bkg_click(opts["hWnd"], coords_spec["hand"])  # 点击手动
-		if not act_stat[1] and opts["turn"] < opts["bound"][1] and opts['buff']>1: # 抢归属
+		if act_stat[1] and opts["turn"] < opts["bound"][1] and not opts['follow'] : #抢归属
 			bkg_click(opts["hWnd"], coords_spec["map"]); sleep(0.5) # 打开地图
-			if opts["map"] in ['vip', 'ugyu']: #圣域
-				bkg_click(opts["hWnd"], (0.8785, 0.712), True, -20) # 放大
+			if opts["map"] in ['vipp', 'ugyu']: #圣域
+				#bkg_click(opts["hWnd"], coords_spec["dragP"], True, -1*int(0.04*HEIGHT_WIN)) # 放大
+				bkg_click(opts["hWnd"], coords_spec["dragP1"], count = 4); sleep(0.5) # 放大
 			opts["turn"] += 1
 			opts["last_time"] = time() - 5
 			bkg_click(opts["hWnd"], opts["coords"][opts["turn"]]); sleep(0.5)
