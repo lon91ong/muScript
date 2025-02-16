@@ -30,5 +30,5 @@ import site
 ```
 下载[get-pip.py](https://bootstrap.pypa.io/get-pip.py)到同目录，拖动到python.exe图标上执行
 
-双击init.bat打开命令行，执行`pip -r requirements.txt`安装依赖包
+双击init.bat打开命令行，执行`pip install -r requirements.txt`安装依赖包
 
